@@ -46,7 +46,7 @@
         <div class="card mb-3 chart-card">
             <div class="card-body">
                 <h5 class="card-title">Route Positions (Duration by Position)</h5>
-                <canvas id="routeChart" style="max-height:320px"></canvas>
+            <canvas id="routeChart" class="chart-canvas"></canvas>
             </div>
         </div>
 
@@ -72,22 +72,19 @@
 
 {% block extra_js %}
 <script>
-            (function(){
-                const raw = {{ routes_json|default:'[]'|safe }};
-                const routeData = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
-                const labels = routeData.map(r => r.airport_code + ' (pos ' + r.position + ')');
-                const durations = routeData.map(r => r.duration);
-                const canvasId = 'routeChart';
-                const ctx = document.getElementById(canvasId);
-                if (!ctx) return;
-                // destroy previous chart instance if exists
-                const existing = Chart.getChart(canvasId);
-                if (existing) existing.destroy();
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels, datasets: [{ label: 'Duration (min)', data: durations, backgroundColor: 'rgba(13,110,253,0.7)' }] },
-                    options: { scales:{ x:{ title:{ display:true, text:'Airport (position)' } }, y:{ title:{ display:true, text:'Duration (minutes)' }, beginAtZero:true } }, plugins:{ legend:{ display:false } }, responsive:true, maintainAspectRatio:false }
-                });
-            })();
+                (function(){
+                    const raw = {{ routes_json|default:'[]'|safe }};
+                    const routeData = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
+                    const labels = routeData.map(r => r.airport_code + ' (pos ' + r.position + ')');
+                    const durations = routeData.map(r => r.duration);
+                    function createChart(canvasId, labels, data, color){
+                        const canvas = document.getElementById(canvasId);
+                        if(!canvas) return;
+                        const existing = Chart.getChart(canvasId);
+                        if(existing) existing.destroy();
+                        return new Chart(canvas, { type:'bar', data:{ labels, datasets:[{ label:'Duration (min)', data, backgroundColor: color || 'rgba(13,110,253,0.7)'}] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } } });
+                    }
+                    createChart('routeChart', labels, durations, 'rgba(13,110,253,0.7)');
+                })();
 </script>
 {% endblock %}

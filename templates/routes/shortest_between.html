@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Positions in Interval</h5>
-                    <canvas id="betweenChart" style="height:300px"></canvas>
+                      <canvas id="betweenChart" class="chart-canvas"></canvas>
                 </div>
             </div>
         </div>
@@ -44,18 +44,21 @@
 
 {% block extra_js %}
 <script>
-        (function(){
-            const raw = {{ routes_json|default:'[]'|safe }};
-            const routeData = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
-            const labels = routeData.map(r => r.position + ': ' + r.airport_code);
-            const durations = routeData.map(r => r.duration);
-            const minIndex = durations.indexOf(Math.min(...durations));
-            const canvasId = 'betweenChart';
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            const existing = Chart.getChart(canvasId);
-            if (existing) existing.destroy();
-            new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ data:durations, backgroundColor: durations.map((_,i)=> i===minIndex? 'rgba(220,53,69,0.9)' : 'rgba(13,110,253,0.7)') }] }, options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } }, responsive:true, maintainAspectRatio:false } });
-        })();
+            (function(){
+                const raw = {{ routes_json|default:'[]'|safe }};
+                const routeData = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
+                const labels = routeData.map(r => r.position + ': ' + r.airport_code);
+                const durations = routeData.map(r => r.duration);
+                const minIndex = durations.indexOf(Math.min(...durations));
+                function createChart(canvasId, labels, data, colorMap){
+                    const canvas = document.getElementById(canvasId);
+                    if(!canvas) return;
+                    const existing = Chart.getChart(canvasId);
+                    if(existing) existing.destroy();
+                    return new Chart(canvas, { type:'bar', data:{ labels, datasets:[{ data, backgroundColor: colorMap }] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } } });
+                }
+                const bg = durations.map((_,i)=> i===minIndex? 'rgba(220,53,69,0.9)' : 'rgba(13,110,253,0.7)');
+                createChart('betweenChart', labels, durations, bg);
+            })();
 </script>
 {% endblock %}
